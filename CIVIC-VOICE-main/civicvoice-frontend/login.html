@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Civic Voice</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-50 min-h-screen flex flex-col">
+  <div id="topbar"></div>
+  <main class="flex-1 mx-auto max-w-md w-full px-4 py-16">
+    <div class="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+      <h1 class="text-2xl font-bold">Welcome to Civic Voice</h1>
+      <p class="mt-1 text-sm text-zinc-500">Sign in with any email — no password needed. Use <b>admin@civicvoice.local</b> for the admin dashboard.</p>
+      <div class="mt-6 space-y-3">
+        <input id="auth-email" type="email" placeholder="you@example.com" class="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="grid grid-cols-2 gap-2">
+          <input id="auth-first" placeholder="First name" class="rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input id="auth-last" placeholder="Last name" class="rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <button id="btn-login" class="w-full rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Continue</button>
+      </div>
+      <p class="mt-4 text-xs text-zinc-400">Demo accounts: admin@civicvoice.local (admin) · citizen@civicvoice.local · resident@civicvoice.local</p>
+    </div>
+  </main>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = getCurrentUser();
+      if (user) { location.href = 'my.html'; return; }
+      document.getElementById('btn-login').onclick = async () => {
+        const email = document.getElementById('auth-email').value.trim();
+        const first = document.getElementById('auth-first').value.trim();
+        const last = document.getElementById('auth-last').value.trim();
+        if (!email) return toast('Email required', false);
+        try {
+          const u = await Civic.login(email, first, last);
+          setSession(email, u);
+          toast('Welcome, ' + (u.firstName || email));
+          location.href = u.admin ? 'admin.html' : 'my.html';
+        } catch (e) { toast(e.message, false); }
+      };
+    });
+  </script>
+</body>
+</html>

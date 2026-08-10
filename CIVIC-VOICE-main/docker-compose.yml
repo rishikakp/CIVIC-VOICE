@@ -1,0 +1,20 @@
+# Civic Voice - Java Full Stack
+# Start PostgreSQL, then:
+#   cd civicvoice-backend && mvn spring-boot:run
+# Serve civicvoice-frontend with any static server.
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: civicvoice-db
+    environment:
+      POSTGRES_DB: civicvoice
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - civicvoice-pg:/var/lib/postgresql/data
+
+volumes:
+  civicvoice-pg:

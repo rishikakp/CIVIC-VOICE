@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin dashboard — Civic Voice</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-50 min-h-screen">
+  <div id="topbar"></div>
+  <main class="mx-auto max-w-6xl px-4 py-10 space-y-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold">Manage Issues</h1>
+        <p class="mt-1 text-sm text-zinc-500">Triage, update status, assign workers, and review submissions.</p>
+      </div>
+      <a href="index.html" class="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-100">← Back</a>
+    </div>
+
+    <div id="stats" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+
+    <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm space-y-4">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <input id="a-q" placeholder="Search..." class="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <select id="a-status" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm"><option value="">Status</option><option>SUBMITTED</option><option>ASSIGNED</option><option>IN_PROGRESS</option><option>RESOLVED</option></select>
+        <select id="a-severity" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm"><option value="">Severity</option><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+        <select id="a-queue" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm"><option value="">Queue</option><option value="unassigned">Unassigned</option><option value="critical">Critical</option><option value="stale">Stale (7+ days)</option></select>
+        <button onclick="loadIssues(1)" class="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700">Filter</button>
+      </div>
+    </div>
+
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <div id="pager" class="flex items-center justify-center gap-3 text-sm text-zinc-600"></div>
+
+    <div id="quick"></div>
+  </main>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    let page = 1;
+    const user = getCurrentUser();
+    if (!user || !user.admin) { location.href = 'login.html'; }
+
+    const STATUSES = ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED'];
+
+    function adminCard(i) {
+      const stButtons = STATUSES.map(s =>
+        '<button onclick="setStatus(' + "'" + esc(i.id) + "'" + ',' + "'" + s + "'" + ')" class="rounded-lg border px-2 py-1 text-xs ' +
+        (s === i.status ? 'bg-blue-600 text-white border-blue-600' : 'border-zinc-300 hover:bg-zinc-100') + '">' + s.replace('_', ' ') + '</button>').join('');
+      return '<div class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm space-y-3">' +
+        '<div class="flex items-center justify-between">' + badge(i.issueType, 'bg-blue-50 text-blue-700') + badge(i.severity, severityClass(i.severity)) + '</div>' +
+        '<p class="text-sm text-zinc-800 line-clamp-2">' + esc(i.description) + '</p>' +
+        '<p class="text-xs text-zinc-500">📍 ' + esc(i.mainArea || i.locationName || 'Unknown') + ' · 👍 ' + i.voteCount + '</p>' +
+        '<p class="text-xs text-zinc-400">By ' + esc(i.reporterEmail || 'anonymous') + ' · ' + timeAgo(i.createdAt) + ' · ' + esc(i.shortId.slice(-4)) + '</p>' +
+        '<div class="flex flex-wrap gap-1">' + stButtons + '</div>' +
+        '<div class="flex gap-2"><input id="assign-' + esc(i.id) + '" value="' + esc(i.assignedTo || '') + '" placeholder="Assign to..." class="flex-1 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs">' +
+        '<button onclick="assign(' + "'" + esc(i.id) + "'" + ')" class="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700">Assign</button></div></div>';
+    }
+
+    async function loadIssues(p) {
+      page = p;
+      const params = { page, pageSize: 9 };
+      const q = document.getElementById('a-q').value.trim();
+      const st = document.getElementById('a-status').value;
+      const sev = document.getElementById('a-severity').value;
+      const qu = document.getElementById('a-queue').value;
+      if (q) params.q = q;
+      if (st) params.status = st;
+      if (sev) params.severity = sev;
+      if (qu) params.queue = qu;
+      const r = await Civic.fetchIssues(params);
+      document.getElementById('grid').innerHTML = r.issues.length ? r.issues.map(adminCard).join('')
+        : '<p class="col-span-full text-center text-sm text-zinc-500 py-10">No complaints match these filters.</p>';
+      document.getElementById('pager').innerHTML =
+        'Page ' + r.page + ' of ' + r.totalPages + ' · ' + r.totalCount + ' total' +
+        ' <button onclick="loadIssues(' + (page - 1) + ')" class="rounded-lg border border-zinc-300 px-3 py-1 ' + (page <= 1 ? 'opacity-40 pointer-events-none' : 'hover:bg-zinc-100') + '">Prev</button>' +
+        ' <button onclick="loadIssues(' + (page + 1) + ')" class="rounded-lg border border-zinc-300 px-3 py-1 ' + (page >= r.totalPages ? 'opacity-40 pointer-events-none' : 'hover:bg-zinc-100') + '">Next</button>';
+    }
+
+    async function setStatus(id, status) {
+      try { await Civic.updateStatus(id, status, user.email); toast('Status → ' + status); loadIssues(page); } catch (e) { toast(e.message, false); }
+    }
+    async function assign(id) {
+      const name = document.getElementById('assign-' + id).value.trim();
+      try { await Civic.assignIssue(id, name, user.email); toast('Assigned ✔'); loadIssues(page); } catch (e) { toast(e.message, false); }
+    }
+    window.setStatus = setStatus; window.assign = assign;
+
+    async function loadOverview() {
+      const r = await Civic.fetchOverview(user.email);
+      document.getElementById('stats').innerHTML = [
+        ['Open issues', r.openCount], ['Resolved', r.resolvedCount], ['Total reported', r.totalCount],
+        ['Critical', r.criticalCount], ['Unassigned', r.unassignedCount]
+      ].map(([l, v]) => '<div class="rounded-xl border border-zinc-200 bg-white p-5 text-center shadow-sm"><p class="text-sm text-zinc-500">' + l + '</p><p class="mt-1 text-2xl font-semibold">' + v + '</p></div>').join('');
+      document.getElementById('quick').innerHTML = r.quickLists.map(ql =>
+        '<div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"><h3 class="font-semibold mb-3">' + ql.title + '</h3>' +
+        '<div class="space-y-2">' + (ql.issues.length ? ql.issues.map(i =>
+          '<div class="flex items-center justify-between gap-2 rounded-lg bg-zinc-50 px-3 py-2"><div class="text-xs text-zinc-700 line-clamp-1">' + esc(i.description) + '</div>' + badge(i.status, statusClass(i.status)) + '</div>').join('')
+          : '<p class="text-xs text-zinc-400">None.</p>') + '</div></div>').join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { loadOverview(); loadIssues(1); });
+  </script>
+</body>
+</html>

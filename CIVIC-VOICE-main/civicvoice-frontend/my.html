@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My issues — Civic Voice</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-50 min-h-screen">
+  <div id="topbar"></div>
+  <main class="mx-auto max-w-4xl px-4 py-10">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold">My issues</h1>
+        <p class="mt-1 text-sm text-zinc-500">Track everything you've reported.</p>
+      </div>
+      <a href="report.html" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">+ Report new</a>
+    </div>
+
+    <div id="stats" class="mt-6 grid grid-cols-3 gap-4"></div>
+
+    <div class="mt-6 overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <table class="min-w-full text-sm">
+        <thead class="text-left text-zinc-500 border-b border-zinc-100">
+          <tr>
+            <th class="px-4 py-3">Description</th>
+            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Severity</th>
+            <th class="px-4 py-3">Submitted</th>
+          </tr>
+        </thead>
+        <tbody id="rows" class="divide-y divide-zinc-100"></tbody>
+      </table>
+    </div>
+    <div id="pager" class="mt-4 flex items-center justify-center gap-3 text-sm text-zinc-600"></div>
+  </main>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    let page = 1;
+    async function load() {
+      const user = getCurrentUser();
+      if (!user) { location.href = 'login.html'; return; }
+      const r = await Civic.fetchMine(user.email, page);
+      const open = r.issues.filter(i => i.status !== 'RESOLVED').length;
+      const resolved = r.issues.filter(i => i.status === 'RESOLVED').length;
+      document.getElementById('stats').innerHTML = [
+        ['Open issues', open], ['Resolved', resolved], ['Total submitted', r.totalCount]
+      ].map(([l, v]) => '<div class="rounded-xl border border-zinc-200 bg-white p-5 text-center shadow-sm"><p class="text-sm text-zinc-500">' + l + '</p><p class="mt-1 text-2xl font-semibold">' + v + '</p></div>').join('');
+      document.getElementById('rows').innerHTML = r.issues.length ? r.issues.map(i =>
+        '<tr><td class="px-4 py-3 font-medium text-zinc-800">' + esc(i.description) + '</td>' +
+        '<td class="px-4 py-3 capitalize text-zinc-600">' + esc(i.issueType) + '</td>' +
+        '<td class="px-4 py-3">' + badge(i.status, statusClass(i.status)) + '</td>' +
+        '<td class="px-4 py-3">' + badge(i.severity, severityClass(i.severity)) + '</td>' +
+        '<td class="px-4 py-3 text-zinc-500">' + new Date(i.createdAt).toLocaleString() + '</td></tr>').join('')
+        : '<tr><td colspan="5" class="px-4 py-10 text-center text-zinc-400">No issues reported yet.</td></tr>';
+      document.getElementById('pager').innerHTML =
+        'Page ' + r.page + ' of ' + r.totalPages +
+        ' <button onclick="pg(' + (page - 1) + ')" class="rounded-lg border border-zinc-300 px-3 py-1 ' + (page <= 1 ? 'opacity-40 pointer-events-none' : 'hover:bg-zinc-100') + '">Prev</button>' +
+        ' <button onclick="pg(' + (page + 1) + ')" class="rounded-lg border border-zinc-300 px-3 py-1 ' + (page >= r.totalPages ? 'opacity-40 pointer-events-none' : 'hover:bg-zinc-100') + '">Next</button>';
+    }
+    function pg(p) { page = p; load(); }
+    document.addEventListener('DOMContentLoaded', load);
+  </script>
+</body>
+</html>

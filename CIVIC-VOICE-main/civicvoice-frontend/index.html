@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Civic Voice — Smart Citizen Engagement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>.line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}</style>
+</head>
+<body class="bg-zinc-50 text-zinc-900">
+  <div id="topbar"></div>
+
+  <section class="bg-gradient-to-b from-blue-50 to-zinc-50">
+    <div class="mx-auto max-w-6xl px-4 py-16 text-center">
+      <span class="inline-flex items-center rounded-full bg-blue-600/10 px-3 py-1 text-xs font-medium text-blue-700">Civic tech for real impact</span>
+      <h1 class="mt-5 text-4xl sm:text-5xl font-bold tracking-tight">Turn local complaints into <span class="text-blue-600">visible action</span></h1>
+      <p class="mx-auto mt-4 max-w-xl text-base text-zinc-600">Citizens report issues with photos, severity, and location. Neighbors vote on what matters most. Admins get dashboards and analytics to resolve problems faster.</p>
+      <div class="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a href="report.html" class="rounded-xl bg-blue-600 px-7 py-3 text-sm font-semibold text-white hover:bg-blue-700">Report an issue</a>
+        <a href="#explore" class="rounded-xl border border-zinc-300 bg-white px-7 py-3 text-sm font-semibold hover:bg-zinc-100">View live issues</a>
+      </div>
+    </div>
+  </section>
+
+  <main id="explore" class="mx-auto max-w-6xl px-4 py-10">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-2xl font-bold">Live issues</h2>
+        <p class="text-sm text-zinc-500">See what neighbors reported and vote to support.</p>
+      </div>
+      <div id="auth-mini"></div>
+    </div>
+
+    <div class="mt-5 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm space-y-3">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <input id="f-q" placeholder="Search..." class="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+        <select id="f-severity" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm"><option value="">Severity</option><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+        <select id="f-status" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm"><option value="">Status</option><option>SUBMITTED</option><option>ASSIGNED</option><option>IN_PROGRESS</option><option>RESOLVED</option></select>
+        <button onclick="loadIssues(1)" class="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700">Filter</button>
+      </div>
+    </div>
+
+    <div id="grid" class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+    <div id="pager" class="mt-6 flex items-center justify-center gap-3 text-sm"></div>
+    <div id="auth-panel" class="mt-10"></div>
+  </main>
+
+  <footer class="border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">© 2024 Civic Voice. Built for better cities.</footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    const state = { page: 1, pageSize: 12 };
+    async function loadIssues(page) {
+      state.page = page;
+      const p = { page, pageSize: state.pageSize };
+      const q = document.getElementById('f-q').value.trim();
+      const sev = document.getElementById('f-severity').value;
+      const st = document.getElementById('f-status').value;
+      if (q) p.q = q;
+      if (sev) p.severity = sev;
+      if (st) p.status = st;
+      try {
+        const r = await Civic.fetchIssues(p);
+        document.getElementById('grid').innerHTML = r.issues.length
+          ? r.issues.map(issueCardHTML).join('')
+          : '<p class="col-span-full text-center text-sm text-zinc-500 py-10">No issues match these filters yet.</p>';
+        document.getElementById('pager').innerHTML =
+          'Page ' + r.page + ' of ' + r.totalPages + ' · ' + r.totalCount + ' total' +
+          ' <button onclick="loadIssues(' + (page - 1) + ')" class="rounded-lg border border-zinc-300 px-3 py-1 ' + (page <= 1 ? 'opacity-40 pointer-events-none' : 'hover:bg-zinc-100') + '">Prev</button>' +
+          ' <button onclick="loadIssues(' + (page + 1) + ')" class="rounded-lg border border-zinc-300 px-3 py-1 ' + (page >= r.totalPages ? 'opacity-40 pointer-events-none' : 'hover:bg-zinc-100') + '">Next</button>';
+      } catch (e) { toast(e.message, false); }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      renderSignin();
+      loadIssues(1);
+    });
+  </script>
+</body>
+</html>
