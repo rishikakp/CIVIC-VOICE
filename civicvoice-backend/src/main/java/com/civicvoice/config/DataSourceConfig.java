@@ -18,7 +18,14 @@ public class DataSourceConfig {
     private static String toJdbcUrl(String url) {
         if (url == null || url.isEmpty()) return url;
         if (url.startsWith("jdbc:")) return url;
-        // Convert postgresql:// or postgres:// to jdbc:postgresql://
+        // Convert postgresql:// or postgres:// to the jdbc:postgresql:// scheme the
+        // PostgreSQL JDBC driver requires.
+        if (url.startsWith("postgres://")) {
+            return "jdbc:postgresql://" + url.substring("postgres://".length());
+        }
+        if (url.startsWith("postgresql://")) {
+            return "jdbc:postgresql://" + url.substring("postgresql://".length());
+        }
         return "jdbc:" + url;
     }
 
