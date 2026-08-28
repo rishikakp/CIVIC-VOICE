@@ -1,7 +1,5 @@
 # Civic Voice - Render Blueprint (one-click deploy on render.com)
-# Create a free Render account, then use "Blueprint" via your repo.
-# This provisions: PostgreSQL + backend web service.
-# The static frontend can be deployed separately (see frontend note below).
+# Provisions: PostgreSQL + backend web service + static frontend.
 
 services:
   - type: web
