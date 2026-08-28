@@ -1,5 +1,0 @@
-target/
-pgdata/
-uploads/
-*.log
-node_modules/
