@@ -9,6 +9,7 @@ services:
     runtime: docker
     repo: https://github.com/rishikakp/CIVIC-VOICE.git
     dockerfilePath: civicvoice-backend/Dockerfile
+    healthCheckPath: /api/issues?page=1
     plan: free
     envVars:
       - key: DATABASE_URL
