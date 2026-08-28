@@ -21,12 +21,18 @@ services:
       - key: APP_UPLOAD_DIR
         value: /app/uploads
 
+  - type: static_site
+    name: civicvoice-frontend
+    runtime: static
+    repo: https://github.com/rishikakp/CIVIC-VOICE.git
+    buildCommand: echo "static site"
+    publishPath: civicvoice-frontend
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
 databases:
   - name: civicvoice-db
     plan: free
     databaseName: civic_voice
-
-# FRONTEND NOTE:
-# The frontend is static. To host it publicly, deploy the `civicvoice-frontend`
-# folder to Netlify or Vercel, then set the backend URL via the API override:
-#   window.__API_BASE__ = 'https://<your-backend-url>/api'
