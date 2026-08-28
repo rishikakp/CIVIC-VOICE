@@ -1,0 +1,39 @@
+# Civic Voice - Render Blueprint (one-click deploy on render.com)
+# Create a free Render account, then use "Blueprint" via your repo.
+# This provisions: PostgreSQL + backend web service.
+# The static frontend can be deployed separately (see frontend note below).
+
+services:
+  - type: web
+    name: civicvoice-backend
+    runtime: docker
+    repo: https://github.com/rishikakp/CIVIC-VOICE.git
+    dockerfilePath: civicvoice-backend/Dockerfile
+    plan: free
+    envVars:
+      - key: DB_URL
+        fromDatabase:
+          name: civicvoice-db
+          property: connectionString
+      - key: DB_USER
+        fromDatabase:
+          name: civicvoice-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: civicvoice-db
+          property: password
+      - key: ADMIN_EMAILS
+        value: admin@civicvoice.local
+      - key: APP_UPLOAD_DIR
+        value: /app/uploads
+
+databases:
+  - name: civicvoice-db
+    plan: free
+    databaseName: civic_voice
+
+# FRONTEND NOTE:
+# The frontend is static. To host it publicly, deploy the `civicvoice-frontend`
+# folder to Netlify or Vercel, then set the backend URL via the API override:
+#   window.__API_BASE__ = 'https://<your-backend-url>/api'

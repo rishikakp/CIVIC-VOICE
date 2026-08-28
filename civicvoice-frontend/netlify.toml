@@ -1,0 +1,16 @@
+# Civic Voice - frontend static deploy on Netlify
+# Deploy folder: civicvoice-frontend
+# After deploy, set the backend URL (see js/api.js):
+#   The frontend reads window.__API_BASE__ first, then localStorage.civicvoice_api,
+#   then defaults to http://localhost:8080/api.
+# For a live deployment, either:
+#   - set window.__API_BASE__ in a config.js included before js/api.js, OR
+#   - run in your browser console: localStorage.setItem('civicvoice_api','https://YOUR-BACKEND/api')
+
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

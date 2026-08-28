@@ -1,6 +1,10 @@
-const API_BASE = (window.__API_BASE__) || localStorage.getItem('civicvoice_api') || 'http://localhost:8080/api';
+// ---- DEPLOYMENT OVERRIDE ----
+// For cloud deployment, set this to your live backend URL, e.g.:
+//   'https://civicvoice-backend.onrender.com/api'
+// Leave null for local development (falls back to http://localhost:8080/api).
+if (!window.__API_BASE__) { window.__API_BASE__ = null; }
 
-function getToken() { return localStorage.getItem('civicvoice_email'); }
+const API_BASE = (window.__API_BASE__) || localStorage.getItem('civicvoice_api') || 'http://localhost:8080/api';function getToken() { return localStorage.getItem('civicvoice_email'); }
 function getCurrentUser() { try { return JSON.parse(localStorage.getItem('civicvoice_user') || 'null'); } catch (e) { return null; } }
 
 function setSession(email, user) {
