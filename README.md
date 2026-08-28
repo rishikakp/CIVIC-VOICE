@@ -2,7 +2,18 @@
 
 A transparent, accountability-driven platform that bridges citizens and civic authorities (BBMP, Bengaluru). **Java Full Stack Edition**: Spring Boot + PostgreSQL backend with a JavaScript (vanilla JS + Tailwind) frontend.
 
-> **Note:** This app runs locally on your machine. The URLs below (`http://localhost:8080`, `http://localhost:3000`) only work **after you start the backend and frontend** following the instructions below. They are not live external links.
+> **Note:** This app can run locally on your machine, **or** use the live deployment below.
+
+## 🌍 Live Demo
+
+The app is deployed to Render:
+
+| Component | URL |
+|---|---|
+| **Frontend** | https://civicvoice-frontend-0j4b.onrender.com |
+| **Backend API** | https://civicvoice-backend-t7m6.onrender.com/api |
+
+> The local URLs below (`http://localhost:8080`, `http://localhost:3000`) only work **after you start the backend and frontend** yourself. Use the Live Demo links above to try the deployed version.
 
 ## ⚡ Quick Start (Recommended: Docker)
 
