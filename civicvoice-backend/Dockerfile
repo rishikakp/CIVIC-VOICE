@@ -1,9 +1,13 @@
 # Civic Voice - Backend Dockerfile (multi-stage build)
+# NOTE: Render builds this with the REPO ROOT as the build context
+# (because dockerfilePath points into civicvoice-backend/).
+# So COPY paths are relative to the repo root.
+
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY pom.xml .
+COPY civicvoice-backend/pom.xml .
 RUN mvn -B dependency:go-offline -q || true
-COPY src ./src
+COPY civicvoice-backend/src ./src
 RUN mvn -B clean package -DskipTests
 
 FROM eclipse-temurin:17-jre
