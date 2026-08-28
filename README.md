@@ -2,42 +2,71 @@
 
 A transparent, accountability-driven platform that bridges citizens and civic authorities (BBMP, Bengaluru). **Java Full Stack Edition**: Spring Boot + PostgreSQL backend with a JavaScript (vanilla JS + Tailwind) frontend.
 
-## ⚡ Quick Start
+> **Note:** This app runs locally on your machine. The URLs below (`http://localhost:8080`, `http://localhost:3000`) only work **after you start the backend and frontend** following the instructions below. They are not live external links.
+
+## ⚡ Quick Start (Recommended: Docker)
+
+The fastest way to run on any system — no manual install needed:
+
+```bash
+git clone https://github.com/rishikakp/CIVIC-VOICE.git
+cd CIVIC-VOICE
+
+# Start PostgreSQL (via Docker or install separately)
+docker compose up -d
+
+# Build and run backend
+cd civicvoice-backend
+mvn clean package -DskipTests
+java -jar target/civicvoice-backend-1.0.0.jar
+
+# In a second terminal — serve frontend
+cd ../civicvoice-frontend
+npx serve .
+```
+
+- **Backend:** http://localhost:8080 (starts after build)
+- **Frontend:** http://localhost:3000
+
+## ⚡ Quick Start (Manual Setup)
 
 ### Prerequisites
 - Java 17+
-- Maven 3.9+ (or use the bundled wrapper)
+- Maven 3.9+
 - PostgreSQL 14+ running on `localhost:5432`
-- Node-free frontend — just serve the static files (or open `civicvoice-frontend/index.html`)
+- Node.js (for frontend static server)
 
 ### 1. Database
 ```bash
-psql -U postgres -h localhost -c "CREATE DATABASE civicvoice;"
-```
-Or run the bundled script: `db/setup-db.sql`.
+# Create the database
+psql -U postgres -h localhost -c "CREATE DATABASE civic_voice;"
 
-> The app auto-creates tables on startup (`spring.jpa.hibernate.ddl-auto=update`) and seeds demo data if the database is empty.
+# Or use the bundled script
+psql -U postgres -h localhost -f db/setup-db.sql
+```
+
+> Tables are auto-created by Hibernate on startup (`spring.jpa.hibernate.ddl-auto=update`).
 
 ### 2. Backend (Spring Boot)
 ```bash
 cd civicvoice-backend
 mvn spring-boot:run
 ```
-Backend runs on **http://localhost:8080**.
 
-- Health check: `GET /api/issues?page=1`
-- Default admin email: `admin@civicvoice.local` (override via env `ADMIN_EMAILS`)
+- **Backend URL (after starting):** http://localhost:8080
+- Health check: `GET http://localhost:8080/api/issues?page=1`
+- Default admin email: `admin@civicvoice.local`
 
 ### 3. Frontend (JavaScript)
-Serve the static folder with any static server, or open the files directly:
 ```bash
 cd civicvoice-frontend
-# any static server, e.g.:
 npx serve .
 ```
-Frontend runs on **http://localhost:3000** (or whatever port), configured to call the backend at `http://localhost:8080/api` (set `localStorage.civicvoice_api` to override).
 
-### Demo accounts
+- **Frontend URL (after starting):** http://localhost:3000
+- Configured to call backend at http://localhost:8080/api
+
+### Demo accounts (no password needed)
 | Role | Email | Notes |
 |---|---|---|
 | Admin | `admin@civicvoice.local` | Full admin dashboard |
@@ -54,7 +83,7 @@ Frontend runs on **http://localhost:3000** (or whatever port), configured to cal
 ┌─────────────────────────┐      ┌──────────────────────────────┐      ┌─────────────┐
 │  Frontend (JavaScript)  │ HTTP │  Spring Boot Backend :8080   │  JPA │  PostgreSQL │
 │  static HTML + Tailwind │ ───▶ │  Controllers → Services →    │ ───▶ │  :5432      │
-│  fetch() REST calls     │  JSON│  Repositories (Spring Data)   │      │  civicvoice │
+│  fetch() REST calls     │  JSON│  Repositories (Spring Data)   │      │  civic_voice│
 └─────────────────────────┘      └──────────────────────────────┘      └─────────────┘
                                         │  files
                                         ▼
@@ -182,7 +211,7 @@ status:   SUBMITTED, ASSIGNED, IN_PROGRESS, RESOLVED
 - Local **image upload** served from `/uploads/**`
 - Centralized **exception handling** → consistent `{ "error": "..." }` responses
 - **CORS** enabled for the JS frontend
-- **Seed data** on first startup for instant demo
+- **Seed data** is disabled (add issues via the UI or API)
 
 ---
 
@@ -222,7 +251,7 @@ Environment variables / `application.properties`:
 
 | Property | Default | Description |
 |---|---|---|
-| `spring.datasource.url` | `jdbc:postgresql://localhost:5432/civicvoice` | DB connection |
+| `spring.datasource.url` | `jdbc:postgresql://localhost:5432/civic_voice` | DB connection |
 | `spring.datasource.username` | `postgres` | DB user |
 | `spring.datasource.password` | `postgres` | DB password |
 | `app.admin-emails` / `ADMIN_EMAILS` | `admin@civicvoice.local` | Comma-separated admin list |
