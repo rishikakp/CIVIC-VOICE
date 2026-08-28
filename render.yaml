@@ -21,12 +21,11 @@ services:
       - key: APP_UPLOAD_DIR
         value: /app/uploads
 
-  - type: static_site
+  - type: web
     name: civicvoice-frontend
     runtime: static
-    repo: https://github.com/rishikakp/CIVIC-VOICE.git
     buildCommand: echo "static site"
-    publishPath: civicvoice-frontend
+    staticPublishPath: civicvoice-frontend
     routes:
       - type: rewrite
         source: /*
