@@ -104,12 +104,17 @@
         });
       }
 
-      async function loadClerkSdk() {
-        const urls = window.__CLERK_CDN__ || [];
-        for (const url of urls) {
+      async function loadScripts(urls, label) {
+        for (const url of urls || []) {
           try { await loadScript(url, 15000); return; } catch (e) { /* try next CDN */ }
         }
-        throw new Error('Could not download the Clerk library from any source.');
+        throw new Error('Could not download the Clerk ' + label + ' from any source.');
+      }
+
+      async function loadClerkSdk() {
+        // Core 3 splits prebuilt UI into @clerk/ui; it must load before clerk.load().
+        await loadScripts(window.__CLERK_UI_CDN__, 'UI bundle');
+        await loadScripts(window.__CLERK_CDN__, 'library');
       }
 
       function waitForClerk(timeoutMs) {
@@ -155,7 +160,9 @@
         phase = 'start';
         const clerk = await waitForClerk(8000);
         window.__clerk_instance = clerk;
-        if (!clerk.loaded) await clerk.load();
+        if (!clerk.loaded) {
+          await clerk.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
+        }
 
         if (wantSignOut && clerk.session) {
           try { await clerk.signOut(); } catch (e) { /* best effort */ }
@@ -170,7 +177,7 @@
         btnLabel.textContent = 'Continue securely';
         btn.disabled = false;
         const openClerk = () => clerk.openSignIn({
-          signInFallbackRedirectUrl: location.href,
+          fallbackRedirectUrl: location.href,
           signUpFallbackRedirectUrl: location.href
         });
         btn.onclick = openClerk;
