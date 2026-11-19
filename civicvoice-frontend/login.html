@@ -6,42 +6,183 @@
   <title>Sign in — Civic Voice</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-zinc-50 min-h-screen flex flex-col">
+<body class="min-h-screen bg-gradient-to-br from-zinc-100 via-white to-blue-50 flex flex-col">
   <div id="topbar"></div>
-  <main class="flex-1 mx-auto max-w-md w-full px-4 py-16">
-    <div class="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-      <h1 class="text-2xl font-bold">Welcome to Civic Voice</h1>
-      <p class="mt-1 text-sm text-zinc-500">Sign in with any email — no password needed. Use <b>admin@civicvoice.local</b> for the admin dashboard.</p>
-      <div class="mt-6 space-y-3">
-        <input id="auth-email" type="email" placeholder="you@example.com" class="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <div class="grid grid-cols-2 gap-2">
-          <input id="auth-first" placeholder="First name" class="rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <input id="auth-last" placeholder="Last name" class="rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+  <main class="flex-1 flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-md">
+
+      <!-- Brand -->
+      <div class="flex flex-col items-center text-center">
+        <div class="h-14 w-14 rounded-2xl bg-blue-600 shadow-lg shadow-blue-600/30 grid place-items-center">
+          <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8M7 3v5h8"/>
+          </svg>
         </div>
-        <button id="btn-login" class="w-full rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Continue</button>
+        <h1 class="mt-5 text-2xl font-bold tracking-tight text-zinc-900">Sign in to Civic Voice</h1>
+        <p class="mt-1.5 text-sm text-zinc-500">Report, track and vote on civic issues in your city.</p>
       </div>
-      <p class="mt-4 text-xs text-zinc-400">Demo accounts: admin@civicvoice.local (admin) · citizen@civicvoice.local · resident@civicvoice.local</p>
+
+      <!-- Card -->
+      <div class="mt-8 rounded-2xl bg-white p-7 shadow-xl ring-1 ring-zinc-900/5">
+        <button id="btn-clerk" disabled
+          class="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition">
+          <svg id="btn-spinner" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+          </svg>
+          <span id="btn-label">Loading secure sign-in…</span>
+        </button>
+
+        <div id="clerk-error" class="hidden mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800"></div>
+
+        <div class="mt-5 flex items-center gap-3">
+          <div class="h-px flex-1 bg-zinc-200"></div>
+          <span class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Secure sign-in</span>
+          <div class="h-px flex-1 bg-zinc-200"></div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-center gap-1.5 text-xs text-zinc-400">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span>Encrypted session · Powered by Clerk</span>
+        </div>
+      </div>
+
+      <p class="mt-6 text-center text-xs text-zinc-400">Civic Voice — Smart Citizen Engagement Platform</p>
     </div>
   </main>
+
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      const btn = document.getElementById('btn-clerk');
+      const btnLabel = document.getElementById('btn-label');
+      const btnSpinner = document.getElementById('btn-spinner');
+      const errorEl = document.getElementById('clerk-error');
+
+      const wantSignOut = localStorage.getItem('civicvoice_clerk_signout') === '1';
+      localStorage.removeItem('civicvoice_clerk_signout');
+
+      function showClerkError(msg) {
+        btnSpinner.classList.add('hidden');
+        btnLabel.textContent = 'Sign in';
+        btn.disabled = true;
+        errorEl.textContent = msg;
+        errorEl.classList.remove('hidden');
+      }
+
+      // Already signed in?
       const user = getCurrentUser();
-      if (user) { location.href = 'my.html'; return; }
-      document.getElementById('btn-login').onclick = async () => {
-        const email = document.getElementById('auth-email').value.trim();
-        const first = document.getElementById('auth-first').value.trim();
-        const last = document.getElementById('auth-last').value.trim();
-        if (!email) return toast('Email required', false);
+      if (user && !wantSignOut) { location.href = 'my.html'; return; }
+
+      // --- Clerk secure sign-in ---
+      const pk = window.__CLERK_PK__;
+      if (!pk) { showClerkError('Sign-in is not configured on this deployment.'); return; }
+      if (location.protocol === 'file:') {
+        showClerkError('Open this page through start-app.bat at http://localhost:3000/login.html instead of opening the file directly.');
+        return;
+      }
+
+      function loadScript(url, timeoutMs) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = url;
+          s.async = true;
+          s.crossOrigin = 'anonymous';
+          s.setAttribute('data-clerk-publishable-key', pk);
+          let settled = false;
+          const timer = setTimeout(() => { if (!settled) { settled = true; s.remove(); reject(new Error('timeout')); } }, timeoutMs);
+          s.onload = () => { if (!settled) { settled = true; clearTimeout(timer); resolve(); } };
+          s.onerror = () => { if (!settled) { settled = true; clearTimeout(timer); s.remove(); reject(new Error('network')); } };
+          document.head.appendChild(s);
+        });
+      }
+
+      async function loadClerkSdk() {
+        const urls = window.__CLERK_CDN__ || [];
+        for (const url of urls) {
+          try { await loadScript(url, 15000); return; } catch (e) { /* try next CDN */ }
+        }
+        throw new Error('Could not download the Clerk library from any source.');
+      }
+
+      function waitForClerk(timeoutMs) {
+        return new Promise((resolve, reject) => {
+          const start = Date.now();
+          let classTried = false;
+          (function check() {
+            const c = window.Clerk;
+            if (c && typeof c.load === 'function') return resolve(c);
+            if (typeof c === 'function' && !classTried) {
+              classTried = true;
+              try {
+                const inst = new c(pk);
+                if (typeof inst.load === 'function') { window.Clerk = inst; return resolve(inst); }
+              } catch (e) { /* keep polling */ }
+            }
+            if (Date.now() - start > timeoutMs) return reject(new Error('timeout'));
+            setTimeout(check, 150);
+          })();
+        });
+      }
+
+      let completing = false;
+      async function completeSignIn(clerk) {
+        if (completing) return;
+        completing = true;
         try {
-          const u = await Civic.login(email, first, last);
-          setSession(email, u);
-          toast('Welcome, ' + (u.firstName || email));
-          location.href = u.admin ? 'admin.html' : 'my.html';
-        } catch (e) { toast(e.message, false); }
-      };
+          const clerkToken = await clerk.session.getToken();
+          const res = await Civic.clerkLogin(clerkToken);
+          setSession(res.user.email, res.user, res.token);
+          toast('Welcome, ' + (res.user.firstName || res.user.email));
+          location.href = res.user.admin ? 'admin.html' : 'my.html';
+        } catch (e) {
+          completing = false;
+          toast(e.message, false);
+        }
+      }
+
+      let phase = 'download';
+      try {
+        window.__clerk_publishable_key = pk;
+        await loadClerkSdk();
+        phase = 'start';
+        const clerk = await waitForClerk(8000);
+        window.__clerk_instance = clerk;
+        if (!clerk.loaded) await clerk.load();
+
+        if (wantSignOut && clerk.session) {
+          try { await clerk.signOut(); } catch (e) { /* best effort */ }
+        }
+        if (clerk.session && !wantSignOut) {
+          await completeSignIn(clerk); // already signed in
+          return;
+        }
+
+        // Ready: one button opens Clerk's own sign-in window
+        btnSpinner.classList.add('hidden');
+        btnLabel.textContent = 'Continue securely';
+        btn.disabled = false;
+        const openClerk = () => clerk.openSignIn({
+          signInFallbackRedirectUrl: location.href,
+          signUpFallbackRedirectUrl: location.href
+        });
+        btn.onclick = openClerk;
+        clerk.addListener(() => { if (clerk.session) completeSignIn(clerk); });
+      } catch (e) {
+        const detail = e && e.message ? e.message : String(e);
+        if (phase === 'download') {
+          showClerkError('Could not load the sign-in service. Check your internet connection or ad blocker (allow cdn.jsdelivr.net and clerk.accounts.dev), then refresh the page.');
+        } else {
+          showClerkError('Could not start sign-in (' + detail + '). Refresh the page or try again later.');
+        }
+      }
     });
   </script>
 </body>

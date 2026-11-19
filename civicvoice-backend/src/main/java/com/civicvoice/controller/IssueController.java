@@ -4,8 +4,8 @@ import com.civicvoice.dto.AssignRequest;
 import com.civicvoice.dto.IssuePageResponse;
 import com.civicvoice.dto.IssueResponse;
 import com.civicvoice.dto.StatusRequest;
+import com.civicvoice.security.AuthService;
 import com.civicvoice.service.IssueService;
-import com.civicvoice.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,11 +18,11 @@ import java.util.Map;
 public class IssueController {
 
     private final IssueService issueService;
-    private final UserService userService;
+    private final AuthService authService;
 
-    public IssueController(IssueService issueService, UserService userService) {
+    public IssueController(IssueService issueService, AuthService authService) {
         this.issueService = issueService;
-        this.userService = userService;
+        this.authService = authService;
     }
 
     @GetMapping
@@ -40,14 +40,21 @@ public class IssueController {
     }
 
     @GetMapping("/mine")
-    public IssuePageResponse mine(@RequestParam String email,
-                                  @RequestParam(defaultValue = "1") int page,
-                                  @RequestParam(defaultValue = "10") int pageSize) {
-        return issueService.list(null, null, null, null, null, null, email, page, pageSize);
+    public IssuePageResponse mine(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        String owner = authService.resolveEmail(authorization).orElse(email);
+        if (owner == null || owner.isBlank()) {
+            throw new SecurityException("Sign in required");
+        }
+        return issueService.list(null, null, null, null, null, null, owner, page, pageSize);
     }
 
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<IssueResponse> create(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam("description") String description,
             @RequestParam("issueType") String issueType,
             @RequestParam("severity") String severity,
@@ -56,16 +63,18 @@ public class IssueController {
             @RequestParam(required = false) String locationName,
             @RequestParam(required = false) String email,
             @RequestParam(value = "image", required = false) MultipartFile image) {
+        String reporter = authService.resolveEmail(authorization).orElse(email);
         return ResponseEntity.ok(issueService.create(description, issueType, severity,
-                location, coordinates, locationName, email, image));
+                location, coordinates, locationName, reporter, image));
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<IssueResponse> updateStatus(
             @PathVariable String id,
             @RequestBody StatusRequest request,
-            @RequestParam String adminEmail) {
-        requireAdmin(adminEmail);
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(required = false) String adminEmail) {
+        authService.requireAdmin(authorization, adminEmail);
         return ResponseEntity.ok(issueService.updateStatus(id, request.status()));
     }
 
@@ -73,20 +82,20 @@ public class IssueController {
     public ResponseEntity<IssueResponse> assign(
             @PathVariable String id,
             @RequestBody AssignRequest request,
-            @RequestParam String adminEmail) {
-        requireAdmin(adminEmail);
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(required = false) String adminEmail) {
+        authService.requireAdmin(authorization, adminEmail);
         return ResponseEntity.ok(issueService.assign(id, request.assignedTo()));
     }
 
     @PostMapping("/{id}/vote")
-    public ResponseEntity<Map<String, Object>> vote(@PathVariable String id) {
+    public ResponseEntity<Map<String, Object>> vote(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable String id) {
+        if (authorization != null && !authorization.isBlank()) {
+            authService.requireEmail(authorization);
+        }
         long count = issueService.vote(id);
         return ResponseEntity.ok(Map.of("success", true, "voteCount", count));
-    }
-
-    private void requireAdmin(String adminEmail) {
-        if (!userService.isAdmin(adminEmail)) {
-            throw new SecurityException("Unauthorized: admin access required");
-        }
     }
 }

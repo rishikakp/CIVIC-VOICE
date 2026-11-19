@@ -60,23 +60,8 @@ function renderSignin() {
   } else {
     el.innerHTML = '<div class="rounded-lg border border-zinc-200 bg-white p-4 space-y-3">' +
       '<h2 class="font-semibold text-zinc-900">Sign in to report</h2>' +
-      '<input id="auth-email" type="email" placeholder="you@example.com" class="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">' +
-      '<div class="grid grid-cols-2 gap-2"><input id="auth-first" placeholder="First name" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">' +
-      '<input id="auth-last" placeholder="Last name" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></div>' +
-      '<button onclick="doLogin()" class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Continue</button>' +
-      '<p class="text-xs text-zinc-400">Tip: sign in with admin@civicvoice.local for admin access</p></div>';
-    window.doLogin = async () => {
-      const email = document.getElementById('auth-email').value.trim();
-      const first = document.getElementById('auth-first').value.trim();
-      const last = document.getElementById('auth-last').value.trim();
-      if (!email) return toast('Email required', false);
-      try {
-        const u = await Civic.login(email, first, last);
-        setSession(email, u);
-        toast('Welcome, ' + (u.firstName || email));
-        location.reload();
-      } catch (e) { toast(e.message, false); }
-    };
+      '<p class="text-xs text-zinc-500">Secure sign-in with your email account, powered by Clerk.</p>' +
+      '<a href="login.html" class="block w-full rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700">Continue securely</a></div>';
   }
 }
 

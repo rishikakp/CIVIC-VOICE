@@ -15,15 +15,39 @@ The app is deployed to Render:
 
 > The local URLs below (`http://localhost:8080`, `http://localhost:3000`) only work **after you start the backend and frontend** yourself. Use the Live Demo links above to try the deployed version.
 
-## ⚡ Quick Start (Recommended: Docker)
+## ⚡ Quick Start (Recommended: Windows one-command)
 
-The fastest way to run on any system — no manual install needed:
+```bat
+git clone https://github.com/rishikakp/CIVIC-VOICE.git
+cd CIVIC-VOICE
+start-app.bat
+```
+
+`start-app.bat` starts everything in order and is safe to re-run (it skips
+services that are already up):
+
+1. **PostgreSQL** — starts the bundled local cluster (`civicvoice-backend/pgdata`)
+   using `C:\Program Files\PostgreSQL\17\bin` and ensures the `civic_voice` DB exists.
+2. **Backend** — runs `civicvoice-backend/target/civicvoice-backend-1.0.0.jar`
+   on port 8080 (builds with Maven first only if the jar is missing) and waits
+   until `GET /api/issues` responds.
+3. **Frontend** — serves `civicvoice-frontend/` on port 3000 via `tools/static-server.js`
+   (zero npm dependencies).
+
+- **Frontend:** http://localhost:3000
+- **Backend:** http://localhost:8080/api
+- Logs: `civicvoice-backend/app_out.log`, `civicvoice-backend/app_err.log`, `civicvoice-backend/pg_started.log`
+
+## ⚡ Quick Start (Docker / manual)
+
+Requires Docker (for PostgreSQL) and Maven 3.9+ (to build the backend):
 
 ```bash
 git clone https://github.com/rishikakp/CIVIC-VOICE.git
 cd CIVIC-VOICE
 
-# Start PostgreSQL (via Docker or install separately)
+# Start PostgreSQL (note: uses DB name "civicvoice"; set DB_URL accordingly,
+# or just use start-app.bat which uses the local cluster + civic_voice DB)
 docker compose up -d
 
 # Build and run backend
@@ -119,6 +143,8 @@ npx serve .
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
 | `POST` | `/api/auth/login` | Public | Upsert user by email, returns user + `admin` flag |
+| `POST` | `/api/auth/clerk` | Bearer (Clerk JWT) | Exchange Clerk JWT for app session token + user |
+| `GET` | `/api/auth/me` | Bearer | Current identity (Clerk or app token) |
 | `GET` | `/api/auth/admin-check?email=` | Public | Returns whether email is admin |
 | `GET` | `/api/issues` | Public | Paginated list with filters (see below) |
 | `GET` | `/api/issues/mine?email=&page=` | Public | Issues reported by a user |
@@ -269,7 +295,57 @@ Environment variables / `application.properties`:
 | `app.upload-dir` | `uploads` | Local image storage folder |
 | `server.port` | `8080` | Backend port |
 
-Frontend: `localStorage.civicvoice_api` overrides the backend base URL (default `http://localhost:8080/api`).
+Frontend base URL resolution (`js/config.js` + `js/api.js`), in priority order:
+1. `localStorage.civicvoice_api` (manual override)
+2. `window.__API_BASE__` — automatically `http://localhost:8080/api` when the page is
+   opened from `localhost`/`127.0.0.1`, otherwise the live Render backend.
+
+---
+
+## 🔐 Authentication (Clerk)
+
+Sign-in is powered by [Clerk](https://clerk.com). `login.html` offers **Continue with
+Clerk** (email/OAuth via the prebuilt Clerk UI) plus the password-less demo sign-in.
+
+### How it works
+
+1. The browser loads Clerk JS (`js/config.js` → `window.__CLERK_PK__`, public by design)
+   and obtains a short-lived Clerk session JWT (≈60 s).
+2. `POST /api/auth/clerk` exchanges it for a **Civic Voice session token** (HS256, 7 days):
+   the backend verifies the Clerk JWT against the instance JWKS
+   (`https://<domain>/.well-known/jwks.json`, derived from the publishable key), then
+   resolves the profile (email/name/avatar) through the Clerk Backend API
+   `GET /v1/users/{sub}` using the **secret key** — Clerk session tokens contain no email
+   claim, so the secret key is required.
+3. The app token is stored in `localStorage.civicvoice_token` and sent as
+   `Authorization: Bearer …` on every API call (see `js/api.js`). Identity comes from the
+   token; `email`/`adminEmail` parameters are only fallbacks for the demo login.
+4. Expired/invalid tokens get `401` → the frontend clears the session and returns to
+   `login.html`.
+
+### Files & environment
+
+| What | Where |
+|---|---|
+| Publishable key (public) | `civicvoice-frontend/js/config.js` → `window.__CLERK_PK__` |
+| Secret key + admin list (private) | repo-root `.env` (**gitignored**), loaded by `civicvoice-backend/start-backend.bat` |
+| Session signing secret | `APP_SESSION_SECRET` env, otherwise auto-generated in `civicvoice-backend/session.secret` (gitignored) |
+
+`.env` format (never commit this file):
+
+```bash
+CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+ADMIN_EMAILS=admin@civicvoice.local,you@yourdomain.com
+```
+
+> To make a **Clerk-signed-in user an admin**, add their email to `ADMIN_EMAILS`
+> (Clerk rejects `.local` addresses, so use a real email when signing up with Clerk).
+> Demo accounts (`admin@civicvoice.local`, …) keep working through the password-less
+> demo sign-in.
+>
+> ⚠️ Treat `CLERK_SECRET_KEY` like a password — it grants full Backend API access.
+> If a secret key is ever shared or committed, roll it in the Clerk dashboard.
 
 ---
 

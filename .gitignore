@@ -8,3 +8,10 @@ uploads/
 .vscode/
 node_modules/
 .DS_Store
+
+# Secrets / local session signing key
+.env
+session.secret
+civicvoice-backend/session.secret
+cold_start*
+

@@ -33,6 +33,15 @@ public class UserService {
         return email != null && adminEmails.contains(email.toLowerCase());
     }
 
+    public UserResponse findByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new SecurityException("Sign in required");
+        }
+        User user = userRepository.findByEmailIgnoreCase(email.trim().toLowerCase())
+                .orElseThrow(() -> new SecurityException("Unknown user"));
+        return toResponse(user);
+    }
+
     @Transactional
     public UserResponse loginOrRegister(LoginRequest req) {
         String email = req.email().trim().toLowerCase();
