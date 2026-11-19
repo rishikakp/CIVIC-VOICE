@@ -10,7 +10,7 @@
 
 // Clerk publishable key (public by design - safe to ship in the browser).
 // Keep in sync with CLERK_PUBLISHABLE_KEY in the repo-root .env file.
-window.__CLERK_PK__ = window.__CLERK_PK__ || 'pk_test_c3Ryb25nLWdvcmlsbGEtNzAuY2xlcmsuYWNjb3VudHMuZGV2JA';
+window.__CLERK_PK__ = window.__CLERK_PK__ || 'pk_test_dXNlZnVsLXF1ZXR6YWwtNzk1OC5jbGVyay5hY2NvdW50cy5kZXYk';
 
 // Clerk JS SDK sources, in order of preference. The second URL is hosted by
 // Clerk itself, so sign-in still works if cdn.jsdelivr.net is blocked.

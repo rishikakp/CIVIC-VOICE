@@ -25,7 +25,7 @@ services:
       - key: ADMIN_EMAILS
         value: admin@civicvoice.local,priya@civicvoice.local,civic.test@example.com,ranjithdevadiga70@gmail.com,rishikakpk@gmail.com
       - key: CLERK_PUBLISHABLE_KEY
-        value: pk_test_c3Ryb25nLWdvcmlsbGEtNzAuY2xlcmsuYWNjb3VudHMuZGV2JA
+        value: pk_test_dXNlZnVsLXF1ZXR6YWwtNzk1OC5jbGVyay5hY2NvdW50cy5kZXYk
       - key: CLERK_SECRET_KEY
         sync: false
       - key: APP_UPLOAD_DIR
