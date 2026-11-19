@@ -15,4 +15,5 @@ WORKDIR /app
 COPY --from=build /app/target/civicvoice-backend-1.0.0.jar app.jar
 EXPOSE 8080
 ENV APP_UPLOAD_DIR=/app/uploads
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Convert Render's postgres:// URL to JDBC format expected by Spring
+ENTRYPOINT ["sh","-c","if [ -n \"$DATABASE_URL\" ]; then export DB_URL=\"$(echo \"$DATABASE_URL\" | sed -e 's|^postgresql://|jdbc:postgresql://|' -e 's|^postgres://|jdbc:postgresql://|')\"; fi; exec java -jar app.jar"]

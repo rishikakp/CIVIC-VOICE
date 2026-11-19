@@ -5,7 +5,7 @@ services:
   - type: web
     name: civicvoice-backend
     runtime: docker
-    repo: https://github.com/rishikakp/CIVIC-VOICE.git
+    repo: https://github.com/ranjithdevadiga03/CIVIC_VOICE.git
     dockerfilePath: civicvoice-backend/Dockerfile
     healthCheckPath: /api/issues?page=1
     plan: free
@@ -14,14 +14,27 @@ services:
         fromDatabase:
           name: civicvoice-db
           property: connectionString
+      - key: DB_USER
+        fromDatabase:
+          name: civicvoice-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: civicvoice-db
+          property: password
       - key: ADMIN_EMAILS
-        value: admin@civicvoice.local
+        value: admin@civicvoice.local,priya@civicvoice.local,civic.test@example.com,ranjithdevadiga70@gmail.com,rishikakpk@gmail.com
+      - key: CLERK_PUBLISHABLE_KEY
+        value: pk_test_c3Ryb25nLWdvcmlsbGEtNzAuY2xlcmsuYWNjb3VudHMuZGV2JA
+      - key: CLERK_SECRET_KEY
+        sync: false
       - key: APP_UPLOAD_DIR
         value: /app/uploads
 
   - type: web
     name: civicvoice-frontend
     runtime: static
+    repo: https://github.com/ranjithdevadiga03/CIVIC_VOICE.git
     buildCommand: echo "static site"
     staticPublishPath: civicvoice-frontend
     routes:
