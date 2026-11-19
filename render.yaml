@@ -5,7 +5,7 @@ services:
   - type: web
     name: civicvoice-backend
     runtime: docker
-    repo: https://github.com/ranjithdevadiga03/CIVIC_VOICE.git
+    repo: https://github.com/rishikakp/CIVIC-VOICE.git
     dockerfilePath: civicvoice-backend/Dockerfile
     healthCheckPath: /api/issues?page=1
     plan: free
@@ -34,7 +34,7 @@ services:
   - type: web
     name: civicvoice-frontend
     runtime: static
-    repo: https://github.com/ranjithdevadiga03/CIVIC_VOICE.git
+    repo: https://github.com/rishikakp/CIVIC-VOICE.git
     buildCommand: echo "static site"
     staticPublishPath: civicvoice-frontend
     routes:
