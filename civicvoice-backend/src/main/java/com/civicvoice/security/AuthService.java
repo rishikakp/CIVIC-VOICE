@@ -50,7 +50,7 @@ public class AuthService {
         }
         Map<String, Object> claims = clerkVerifier.verify(token);
         String sub = String.valueOf(claims.get("sub"));
-        return Optional.of(clerkUsers.fetchProfile(sub, claims).email());
+        return Optional.of(clerkUsers.fetchProfile(sub, token, claims).email());
     }
 
     /** Like resolveEmail but requires an identity (HTTP 401 when missing). */
@@ -83,7 +83,7 @@ public class AuthService {
         if (token == null) throw new SecurityException("Missing Clerk session token");
         Map<String, Object> claims = clerkVerifier.verify(token);
         String sub = String.valueOf(claims.get("sub"));
-        ClerkUserService.ClerkProfile profile = clerkUsers.fetchProfile(sub, claims);
+        ClerkUserService.ClerkProfile profile = clerkUsers.fetchProfile(sub, token, claims);
 
         UserResponse user = userService.loginOrRegister(new LoginRequest(
                 profile.email(), profile.firstName(), profile.lastName(), profile.imageUrl()));
