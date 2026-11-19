@@ -47,6 +47,10 @@ public class ClerkUserService {
         }
     }
 
+    public boolean isConfigured() {
+        return !secretKey.isEmpty();
+    }
+
     public ClerkProfile fetchProfile(String userId, String clerkToken, Map<String, Object> tokenClaims) {
         if (userId == null || !userId.startsWith("user_")) {
             throw new SecurityException("Invalid token subject");
