@@ -48,7 +48,14 @@ public class ClerkTokenVerifier {
     public ClerkTokenVerifier(@Value("${app.clerk.publishable-key:}") String publishableKey) {
         this.publishableKey = publishableKey == null ? "" : publishableKey.trim();
         if (!this.publishableKey.isEmpty()) {
-            deriveEndpoints();
+            try {
+                deriveEndpoints();
+            } catch (Exception e) {
+                // Never block application startup on a bad Clerk key: leave
+                // verification disabled and surface the real cause in the logs.
+                log.error("Clerk verification disabled - cannot derive issuer from "
+                        + "app.clerk.publishable-key: {}", e.getMessage());
+            }
         } else {
             log.warn("app.clerk.publishable-key not set - Clerk sign-in verification is disabled");
         }
